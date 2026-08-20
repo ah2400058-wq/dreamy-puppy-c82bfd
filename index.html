@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signature Haunted Bites POS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f3f4f6;color:#111827}
+#loginPage{height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#111827,#7f1d1d)}
+.login-box{background:#fff;width:350px;padding:35px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.login-box h1{text-align:center;color:#b91c1c;margin-bottom:10px}
+.login-box p{text-align:center;color:#666;margin-bottom:25px}
+input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin:7px 0;font-size:15px}
+button{border:none;padding:11px 16px;border-radius:8px;cursor:pointer;font-weight:bold}
+.login-btn{width:100%;background:#b91c1c;color:#fff;margin-top:10px}
+.error{color:red;text-align:center;margin-top:10px}
+#app{display:none;min-height:100vh}
+.sidebar{position:fixed;width:230px;height:100vh;background:#111827;color:#fff;padding:20px 12px}
+.logo{font-size:20px;font-weight:bold;text-align:center;color:#f87171;margin-bottom:30px}
+.nav button{width:100%;background:transparent;color:#fff;text-align:left;margin:4px 0}
+.nav button:hover{background:#374151}
+.main{margin-left:230px;padding:25px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+.logout{background:#dc2626;color:#fff}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.card{background:#fff;padding:22px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card h3{color:#6b7280;font-size:14px}.card strong{display:block;font-size:25px;margin-top:8px}
+.pos{display:grid;grid-template-columns:1fr 360px;gap:20px}
+.menu-area,.cart-area{background:#fff;border-radius:15px;padding:20px}
+.categories{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}
+.categories button{background:#e5e7eb}.categories button.active{background:#b91c1c;color:#fff}
+.products{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.product{background:#f9fafb;border:1px solid #ddd;padding:20px 10px;border-radius:12px;text-align:center;cursor:pointer}
+.product:hover{border-color:#b91c1c;background:#fff1f2}
+.product h4{margin-bottom:8px}.product span{color:#b91c1c;font-weight:bold}
+.cart-item{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee}
+.qty button{padding:4px 8px;background:#e5e7eb}
+.total-box{margin-top:15px;border-top:2px solid #ddd;padding-top:15px}
+.total-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+.grand-total{font-size:22px;font-weight:bold;color:#b91c1c}
+.complete{width:100%;background:#16a34a;color:#fff;margin-top:15px}
+.section{display:none}.section.active{display:block}
+.panel{background:#fff;padding:20px;border-radius:15px}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{padding:12px;border-bottom:1px solid #eee;text-align:left}
+.action{background:#2563eb;color:#fff;margin-right:5px}.delete{background:#dc2626;color:#fff}
+.add{background:#16a34a;color:#fff;margin-top:10px}
+#receipt{display:none;width:300px;padding:20px;background:#fff;color:#000}
+.receipt-center{text-align:center}
+@media print{body *{visibility:hidden}#receipt,#receipt *{visibility:visible}#receipt{display:block;position:absolute;left:0;top:0}}
+@media(max-width:900px){.sidebar{width:180px}.main{margin-left:180px}.cards{grid-template-columns:repeat(2,1fr)}.pos{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="loginPage">
+  <div class="login-box">
+    <h1>👻 Signature</h1>
+    <p>Haunted Bites POS</p>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button class="login-btn" onclick="login()">LOGIN</button>
+    <div id="loginError" class="error"></div>
+  </div>
+</div>
+
+<div id="app">
+<aside class="sidebar">
+  <div class="logo">SIGNATURE<br>HAUNTED BITES</div>
+  <div class="nav">
+    <button onclick="showSection('dashboard')">📊 Dashboard</button>
+    <button onclick="showSection('pos')">🧾 New Order</button>
+    <button onclick="showSection('orders')">📋 Orders</button>
+    <button onclick="showSection('menu')">🍕 Menu</button>
+    <button onclick="showSection('reports')">📈 Reports</button>
+    <button onclick="showSection('settings')">⚙️ Settings</button>
+  </div>
+</aside>
+
+<main class="main">
+<div class="header"><h2 id="pageTitle">Dashboard</h2><button class="logout" onclick="logout()">Logout</button></div>
+
+<section id="dashboard" class="section active">
+  <div class="cards">
+    <div class="card"><h3>Today's Sales</h3><strong id="todaySales">Rs. 0</strong></div>
+    <div class="card"><h3>Today's Orders</h3><strong id="todayOrders">0</strong></div>
+    <div class="card"><h3>Cash Sales</h3><strong id="cashSales">Rs. 0</strong></div>
+    <div class="card"><h3>Delivery Sales</h3><strong id="deliverySales">Rs. 0</strong></div>
+  </div>
+</section>
+
+<section id="pos" class="section">
+<div class="pos">
+<div class="menu-area">
+<h2>New Order</h2>
+<select id="orderType" onchange="orderTypeChanged()">
+<option value="Dine In">Dine In</option><option value="Takeaway">Takeaway</option><option value="Delivery">Delivery</option>
+</select>
+<input id="tableNumber" placeholder="Table Number">
+<div id="deliveryFields" style="display:none">
+<input id="customerName" placeholder="Customer Name">
+<input id="customerPhone" placeholder="Phone">
+<input id="customerAddress" placeholder="Address">
+</div>
+<div class="categories" id="categories"></div>
+<div class="products" id="products"></div>
+</div>
+
+<div class="cart-area">
+<h2>Current Bill</h2><div id="cart"></div>
+<div class="total-box">
+<div class="total-row"><span>Subtotal</span><strong id="subtotal">Rs. 0</strong></div>
+<div class="total-row"><span>Discount</span><input id="discount" type="number" value="0" min="0" onchange="updateCart()"></div>
+<div class="total-row"><span>Delivery Charges</span><input id="deliveryCharges" type="number" value="0" min="0" onchange="updateCart()"></div>
+<div class="total-row grand-total"><span>Total</span><span id="grandTotal">Rs. 0</span></div>
+<select id="paymentMethod" onchange="paymentChanged()"><option>Cash</option><option>Card</option><option>Online</option><option>Other</option></select>
+<div id="cashBox">
+<input id="cashReceived" type="number" placeholder="Cash Received" oninput="calculateChange()">
+<div class="total-row"><span>Change</span><strong id="change">Rs. 0</strong></div>
+</div>
+<button class="complete" onclick="completeOrder()">COMPLETE ORDER</button>
+</div></div>
+</div>
+</section>
+
+<section id="orders" class="section">
+<div class="panel"><h2>Order History</h2>
+<input id="orderSearch" placeholder="Search order..." oninput="renderOrders()">
+<table><thead><tr><th>Order</th><th>Date</th><th>Type</th><th>Total</th><th>Payment</th><th>Action</th></tr></thead>
+<tbody id="ordersTable"></tbody></table></div>
+</section>
+
+<section id="menu" class="section">
+<div class="panel"><h2>Menu Management</h2>
+<input id="newName" placeholder="Product Name"><input id="newPrice" type="number" placeholder="Price"><input id="newCategory" placeholder="Category">
+<button class="add" onclick="addProduct()">+ Add Product</button>
+<table><thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Action</th></tr></thead><tbody id="menuTable"></tbody></table>
+</div>
+</section>
+
+<section id="reports" class="section">
+<div class="panel"><h2>Sales Reports</h2><div class="cards">
+<div class="card"><h3>Total Sales</h3><strong id="reportSales">Rs. 0</strong></div>
+<div class="card"><h3>Total Orders</h3><strong id="reportOrders">0</strong></div>
+</div></div>
+</section>
+
+<section id="settings" class="section">
+<div class="panel"><h2>Settings</h2>
+<input id="restaurantName" value="SIGNATURE HAUNTED BITES" placeholder="Restaurant Name">
+<input id="restaurantPhone" placeholder="Phone Number"><input id="restaurantAddress" placeholder="Restaurant Address">
+<button class="add" onclick="saveSettings()">Save Settings</button>
+</div></section>
+</main></div>
+
+<div id="receipt">
+<div class="receipt-center"><h2 id="receiptName">SIGNATURE HAUNTED BITES</h2><p>Pizza & Fast Food</p><hr>
+<p id="receiptOrder"></p><p id="receiptDate"></p><p id="receiptType"></p><hr></div>
+<div id="receiptItems"></div><hr>
+<p>Subtotal: <span id="rSubtotal"></span></p><p>Discount: <span id="rDiscount"></span></p><p>Delivery: <span id="rDelivery"></span></p>
+<h3>Total: <span id="rTotal"></span></h3><p>Payment: <span id="rPayment"></span></p><p>Cash: <span id="rCash"></span></p><p>Change: <span id="rChange"></span></p><hr>
+<div class="receipt-center"><p>Thank you for visiting!</p><strong>Signature Haunted Bites</strong></div>
+</div>
+
+<script>
+let products=JSON.parse(localStorage.getItem("products"))||[
+{id:1,name:"Small Pizza",category:"Pizza",price:800},{id:2,name:"Medium Pizza",category:"Pizza",price:1200},
+{id:3,name:"Large Pizza",category:"Pizza",price:1700},{id:4,name:"Family Pizza",category:"Pizza",price:2300},
+{id:5,name:"Zinger Burger",category:"Burgers",price:450},{id:6,name:"Chicken Burger",category:"Burgers",price:400},
+{id:7,name:"Beef Burger",category:"Burgers",price:500},{id:8,name:"Regular Fries",category:"Fries",price:200},
+{id:9,name:"Large Fries",category:"Fries",price:300},{id:10,name:"Loaded Fries",category:"Fries",price:450},
+{id:11,name:"Pepsi",category:"Drinks",price:100},{id:12,name:"Coke",category:"Drinks",price:100},
+{id:13,name:"7UP",category:"Drinks",price:100},{id:14,name:"Water",category:"Drinks",price:60}
+];
+let cart=[],orders=JSON.parse(localStorage.getItem("orders"))||[],selectedCategory="All";
+
+function login(){if(document.getElementById("username").value==="admin"&&document.getElementById("password").value==="admin123"){loginPage.style.display="none";app.style.display="block";loadAll()}else loginError.innerText="Wrong username or password"}
+function logout(){app.style.display="none";loginPage.style.display="flex"}
+function showSection(id){document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");let t={dashboard:"Dashboard",pos:"New Order",orders:"Order History",menu:"Menu Management",reports:"Sales Reports",settings:"Settings"};pageTitle.innerText=t[id];if(id==="orders")renderOrders();if(id==="menu")renderMenu();if(id==="reports")updateDashboard()}
+function renderCategories(){let c=["All",...new Set(products.map(p=>p.category))];categories.innerHTML=c.map(x=>`<button class="${selectedCategory===x?"active":""}" onclick="selectCategory('${x}')">${x}</button>`).join("")}
+function selectCategory(c){selectedCategory=c;renderCategories();renderProducts()}
+function renderProducts(){let l=selectedCategory==="All"?products:products.filter(p=>p.category===selectedCategory);productsEl= document.getElementById("products");productsEl.innerHTML=l.map(p=>`<div class="product" onclick="addToCart(${p.id})"><h4>${p.name}</h4><span>Rs. ${p.price}</span></div>`).join("")}
+function addToCart(id){let p=products.find(x=>x.id===id),e=cart.find(x=>x.id===id);if(e)e.qty++;else cart.push({...p,qty:1});updateCart()}
+function changeQty(id,a){let i=cart.find(x=>x.id===id);if(!i)return;i.qty+=a;if(i.qty<=0)cart=cart.filter(x=>x.id!==id);updateCart()}
+function updateCart(){cartEl=document.getElementById("cart");cartEl.innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><div><strong>${i.name}</strong><br>Rs. ${i.price} × ${i.qty}</div><div class="qty"><button onclick="changeQty(${i.id},-1)">−</button> ${i.qty} <button onclick="changeQty(${i.id},1)">+</button></div></div>`).join(""):"<p>No items added.</p>";let s=cart.reduce((a,i)=>a+i.price*i.qty,0),d=+discount.value||0,dc=+deliveryCharges.value||0,t=Math.max(0,s-d+dc);subtotal.innerText="Rs. "+s;grandTotal.innerText="Rs. "+t;calculateChange()}
+function calculateChange(){let t=+(grandTotal.innerText.replace("Rs.",""))||0,c=+cashReceived.value||0;change.innerText="Rs. "+Math.max(0,c-t)}
+function orderTypeChanged(){let t=orderType.value;deliveryFields.style.display=t==="Delivery"?"block":"none";if(t!=="Delivery")deliveryCharges.value=0;updateCart()}
+function paymentChanged(){cashBox.style.display=paymentMethod.value==="Cash"?"block":"none"}
+function completeOrder(){if(!cart.length)return alert("Please add items first.");let t=orderType.value,s=cart.reduce((a,i)=>a+i.price*i.qty,0),d=+discount.value||0,dc=+deliveryCharges.value||0,total=Math.max(0,s-d+dc),pay=paymentMethod.value,cash=pay==="Cash"?+cashReceived.value||0:0;if(pay==="Cash"&&cash<total)return alert("Cash received is less than total.");let o={id:Date.now(),orderNumber:"SHB-"+String(orders.length+1).padStart(4,"0"),date:new Date().toLocaleString(),type:t,table:tableNumber.value,customer:customerName.value,phone:customerPhone.value,address:customerAddress.value,items:[...cart],subtotal:s,discount:d,delivery:dc,total,payment:pay,cash,change:Math.max(0,cash-total)};orders.push(o);localStorage.setItem("orders",JSON.stringify(orders));printReceipt(o);cart=[];discount.value=0;deliveryCharges.value=0;cashReceived.value="";updateCart();updateDashboard()}
+function printReceipt(o){receiptOrder.innerText="Order: "+o.orderNumber;receiptDate.innerText=o.date;receiptType.innerText="Type: "+o.type;receiptItems.innerHTML=o.items.map(i=>`<p>${i.name}<br>${i.qty} × Rs.${i.price} = Rs.${i.qty*i.price}</p>`).join("");rSubtotal.innerText="Rs. "+o.subtotal;rDiscount.innerText="Rs. "+o.discount;rDelivery.innerText="Rs. "+o.delivery;rTotal.innerText="Rs. "+o.total;rPayment.innerText=o.payment;rCash.innerText="Rs. "+o.cash;rChange.innerText="Rs. "+o.change;window.print()}
+function renderOrders(){let q=(orderSearch.value||"").toLowerCase();ordersTable.innerHTML=orders.filter(o=>o.orderNumber.toLowerCase().includes(q)||o.customer.toLowerCase().includes(q)).slice().reverse().map(o=>`<tr><td>${o.orderNumber}</td><td>${o.date}</td><td>${o.type}</td><td>Rs. ${o.total}</td><td>${o.payment}</td><td><button class="action" onclick='printReceipt(${JSON.stringify(o)})'>Print</button></td></tr>`).join("")}
+function renderMenu(){menuTable.innerHTML=products.map(p=>`<tr><td>${p.name}</td><td>${p.category}</td><td>Rs. ${p.price}</td><td><button class="action" onclick="editProduct(${p.id})">Edit</button><button class="delete" onclick="deleteProduct(${p.id})">Delete</button></td></tr>`).join("")}
+function addProduct(){let n=newName.value,p=+newPrice.value,c=newCategory.value;if(!n||!p||!c)return alert("Fill all product fields.");products.push({id:Date.now(),name:n,price:p,category:c});localStorage.setItem("products",JSON.stringify(products));newName.value="";newPrice.value="";newCategory.value="";renderMenu();renderCategories();renderProducts()}
+function editProduct(id){let p=products.find(x=>x.id===id),n=prompt("Product name:",p.name);if(n===null)return,void 0;let pr=prompt("Price:",p.price);if(pr===null)return,void 0;let c=prompt("Category:",p.category);if(c===null)return,void 0;p.name=n;p.price=+pr;p.category=c;localStorage.setItem("products",JSON.stringify(products));renderMenu();renderCategories();renderProducts()}
+function deleteProduct(id){if(!confirm("Delete this product?"))return;products=products.filter(p=>p.id!==id);localStorage.setItem("products",JSON.stringify(products));renderMenu();renderCategories();renderProducts()}
+function updateDashboard(){let today=new Date().toLocaleDateString(),to=orders.filter(o=>new Date(o.id).toLocaleDateString()===today),sales=to.reduce((a,o)=>a+o.total,0),cash=to.filter(o=>o.payment==="Cash").reduce((a,o)=>a+o.total,0),del=to.filter(o=>o.type==="Delivery").reduce((a,o)=>a+o.total,0);todaySales.innerText="Rs. "+sales;todayOrders.innerText=to.length;cashSales.innerText="Rs. "+cash;deliverySales.innerText="Rs. "+del;reportSales.innerText="Rs. "+orders.reduce((a,o)=>a+o.total,0);reportOrders.innerText=orders.length}
+function saveSettings(){let s={name:restaurantName.value,phone:restaurantPhone.value,address:restaurantAddress.value};localStorage.setItem("settings",JSON.stringify(s));receiptName.innerText=s.name;alert("Settings saved.")}
+function loadAll(){renderCategories();renderProducts();renderMenu();renderOrders();updateDashboard()}
+</script>
+</body>
+</html>
